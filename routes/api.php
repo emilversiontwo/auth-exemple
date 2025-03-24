@@ -8,3 +8,4 @@ Route::get('hello', function () {
 });
 
 Route::post('register', [AuthController::class, 'register'])->name('register');
+Route::post('login', [AuthController::class, 'login'])->name('login');

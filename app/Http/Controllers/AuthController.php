@@ -6,6 +6,7 @@ use App\Http\Resources\RegisterResource;
 use App\Models\Auth;
 use App\Models\User;
 use Doctrine\Common\Lexer\Token;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -26,6 +27,26 @@ class AuthController extends Controller
         $user->password = Hash::make($data['password']);
         $user->save();
 
+        $authUser = new Auth();
+        $authUser->user()->associate($user);
+        $authUser->token = hash('sha256', $plainTextToken = Str::random(40));
+        $authUser->active = true;
+        $authUser->save();
+
+        return (new RegisterResource($user))->response()->setStatusCode(201);
+    }
+
+    public function login(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'email' => ['required', 'string', 'email', 'max:255'],
+            'password' => ['required', 'string', 'min:8'],
+        ]);
+
+        $user = User::where('email', '=' , $data['email'])->firstOrFail();
+        if(!Hash::check($data['password'], $user->password)) {
+            return response()->json(['massage' => 'password is wrong'], 401);
+        }
         $authUser = new Auth();
         $authUser->user()->associate($user);
         $authUser->token = hash('sha256', $plainTextToken = Str::random(40));
