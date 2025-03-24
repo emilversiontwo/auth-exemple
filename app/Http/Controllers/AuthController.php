@@ -2,7 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\RegisterResource;
+use App\Models\Auth;
+use App\Models\User;
+use Doctrine\Common\Lexer\Token;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
+use League\CommonMark\Extension\CommonMark\Node\Inline\Code;
 
 class AuthController extends Controller
 {
@@ -13,9 +20,19 @@ class AuthController extends Controller
             'password' => ['required', 'string', 'min:8'],
         ]);
 
-        dd($data);
+        $user = new User();
+        $user->name = $data['name'];
+        $user->email = $data['email'];
+        $user->password = Hash::make($data['password']);
+        $user->save();
 
-        return $data;
+        $authUser = new Auth();
+        $authUser->user()->associate($user);
+        $authUser->token = hash('sha256', $plainTextToken = Str::random(40));
+        $authUser->active = true;
+        $authUser->save();
+
+        return (new RegisterResource($user))->response()->setStatusCode(201);
     }
 
     /**
