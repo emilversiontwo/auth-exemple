@@ -56,6 +56,29 @@ class AuthController extends Controller
         return (new RegisterResource($user))->response()->setStatusCode(201);
     }
 
+    public function logout(Request $request): JsonResponse {
+        $data = $request->validate([
+            'token' => ['required', 'string'],
+        ]);
+
+        $authUser = Auth::where('token', '=' , $data['token'])->firstOrFail();
+        $authUser->active = false;
+        $authUser->save();
+
+        return response()->json(['message' => 'Logged out'], 200);
+    }
+
+    public function closeAllSessions(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'token' => ['required', 'string'],
+        ]);
+
+        $authUser = Auth::where('token', '=' , $data['token'])->firstOrFail();
+        $allSessions = Auth::where('active', '=', true)->where('user_id', '=', $authUser->user_id)->update(['active' => false]);
+        return response()->json(['message' => 'all sessions closed'], 200);
+    }
+
     /**
      * Display a listing of the resource.
      */
