@@ -53,7 +53,7 @@ class AuthController extends Controller
         $authUser->active = true;
         $authUser->save();
 
-        return (new RegisterResource($user))->response()->setStatusCode(201);
+        return (new RegisterResource($user))->response()->setStatusCode(200);
     }
 
     public function logout(Request $request): JsonResponse {
@@ -62,8 +62,7 @@ class AuthController extends Controller
         ]);
 
         $authUser = Auth::where('token', '=' , $data['token'])->firstOrFail();
-        $authUser->active = false;
-        $authUser->save();
+        $authUser->query()->delete();
 
         return response()->json(['message' => 'Logged out'], 200);
     }
